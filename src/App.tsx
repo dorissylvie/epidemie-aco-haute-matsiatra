@@ -3,14 +3,8 @@ import { NetworkGraph } from "./components/NetworkGraph";
 import { ParetoChart } from "./components/ParetoChart";
 import { CENTERS, DEPOT } from "./data/demoData";
 import { runMoaco } from "./lib/moaco";
-import type { MoacoParams, Plan, Weights } from "./types/model";
+import type { MoacoParams, Plan } from "./types/model";
 import "./App.css";
-
-const DEFAULT_WEIGHTS: Weights = {
-  incidence: 50,
-  population: 30,
-  stockDeficit: 20,
-};
 
 const DEFAULT_PARAMS: MoacoParams = {
   ants: 24,
@@ -22,38 +16,15 @@ const DEFAULT_PARAMS: MoacoParams = {
   maxMissionTime: 540,
 };
 
-function normalizeWeights(raw: Weights): Weights {
-  const sum = raw.incidence + raw.population + raw.stockDeficit;
-  if (sum <= 0) {
-    return {
-      incidence: 1 / 3,
-      population: 1 / 3,
-      stockDeficit: 1 / 3,
-    };
-  }
-
-  return {
-    incidence: raw.incidence / sum,
-    population: raw.population / sum,
-    stockDeficit: raw.stockDeficit / sum,
-  };
-}
-
 function routeToText(route: string[]) {
   return route.join(" -> ");
 }
 
 function App() {
-  const [weightsRaw, setWeightsRaw] = useState<Weights>(DEFAULT_WEIGHTS);
   const [params, setParams] = useState<MoacoParams>(DEFAULT_PARAMS);
   const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>();
 
-  const weights = useMemo(() => normalizeWeights(weightsRaw), [weightsRaw]);
-
-  const result = useMemo(
-    () => runMoaco(CENTERS, DEPOT, weights, params),
-    [weights, params],
-  );
+  const result = useMemo(() => runMoaco(CENTERS, DEPOT, params), [params]);
 
   const selectedPlan: Plan | undefined = useMemo(() => {
     if (result.archive.length === 0) return undefined;
@@ -93,85 +64,64 @@ function App() {
         <p className="eyebrow">Demo MOACO - Donnees fictives</p>
         <h1>Deploiement d&apos;unites mobiles en contexte epidemique</h1>
         <p>
-          Cette demonstration utilise un ACO multi-objectif avec archive Pareto.
-          Le systeme propose plusieurs plans de route selon le compromis cout
-          logistique vs couvrance sanitaire.
+          Cette demonstration applique un MOACO a front de Pareto: aucune
+          priorite fixe cout/sante n&apos;est imposee. Les fourmis explorent des
+          profils differents et le decideur choisit ensuite le compromis.
         </p>
       </header>
 
-      <section className="grid two-cols">
+      <section className="grid">
         <article className="panel">
-          <h2>Poids des criteres sanitaires des centres</h2>
-          <p>
-            Ces poids alimentent le score d&apos;urgence utilise dans
-            l&apos;heuristique ACO.
-          </p>
-
-          <div className="weights-list">
-            <label className="weight-row">
-              <span>Incidence (7 jours)</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={weightsRaw.incidence}
-                onChange={(event) =>
-                  setWeightsRaw((prev) => ({
-                    ...prev,
-                    incidence: Number(event.target.value),
-                  }))
-                }
-              />
-              <strong>{weightsRaw.incidence}</strong>
-            </label>
-
-            <label className="weight-row">
-              <span>Population couverte</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={weightsRaw.population}
-                onChange={(event) =>
-                  setWeightsRaw((prev) => ({
-                    ...prev,
-                    population: Number(event.target.value),
-                  }))
-                }
-              />
-              <strong>{weightsRaw.population}</strong>
-            </label>
-
-            <label className="weight-row">
-              <span>Deficit de stock</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={weightsRaw.stockDeficit}
-                onChange={(event) =>
-                  setWeightsRaw((prev) => ({
-                    ...prev,
-                    stockDeficit: Number(event.target.value),
-                  }))
-                }
-              />
-              <strong>{weightsRaw.stockDeficit}</strong>
-            </label>
+          <h2>1) Affichage des donnees</h2>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Centre</th>
+                  <th>Incidence</th>
+                  <th>Population</th>
+                  <th>Stock</th>
+                  <th>Demande</th>
+                </tr>
+              </thead>
+              <tbody>
+                {CENTERS.map((center) => (
+                  <tr key={center.id}>
+                    <td>{center.id}</td>
+                    <td>{center.incidence7d}</td>
+                    <td>{center.population.toLocaleString("fr-FR")}</td>
+                    <td>{Math.round(center.stockLevel * 100)}%</td>
+                    <td>{center.demandUnits}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        </article>
+      </section>
 
+      <section className="grid">
+        <article className="panel">
+          <h2>Contexte MOACO</h2>
+          <p>
+            Le moteur utilise trois profils de fourmis sans fusionner les
+            objectifs en un score unique: rapides (temps), sanitaires
+            (couvrance) et exploratrices (mixte).
+          </p>
           <div className="normalized-weights">
-            <p>Poids normalises utilises par le moteur:</p>
+            <p>Principe MOACO utilise:</p>
             <ul>
-              <li>Incidence: {(weights.incidence * 100).toFixed(1)}%</li>
-              <li>Population: {(weights.population * 100).toFixed(1)}%</li>
-              <li>Deficit stock: {(weights.stockDeficit * 100).toFixed(1)}%</li>
+              <li>Deux objectifs conserves separement: temps et couvrance</li>
+              <li>Deux traces de pheromones: logistique et sanitaire</li>
+              <li>Selection finale par non-dominance (archive Pareto)</li>
             </ul>
           </div>
         </article>
+      </section>
 
+      <section className="grid">
         <article className="panel">
-          <h2>Parametres ACO</h2>
+          <h2>2) Parametres ACO</h2>
           <div className="constraints-grid">
             <label>
               Fourmis
@@ -260,63 +210,21 @@ function App() {
         </article>
       </section>
 
-      <section className="grid two-cols">
+      <section className="grid">
         <article className="panel">
-          <h2>Graphe reseau: routes et centres</h2>
-          <NetworkGraph
-            depot={DEPOT}
-            centers={CENTERS}
-            selectedPlan={selectedPlan}
-          />
-          <p className="hint">
-            Ligne epaisse: route du plan selectionne. Couleur des centres: vert
-            = stock correct, orange = moyen, rouge = stock critique.
+          <h2>Lecture rapide des parametres</h2>
+          <p>
+            Augmenter capacite/temps augmente en general la couvrance. Augmenter
+            fourmis/iterations renforce la qualite de l&apos;exploration.
           </p>
-        </article>
-
-        <article className="panel">
-          <h2>Donnees fictives des centres</h2>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Centre</th>
-                  <th>Incidence</th>
-                  <th>Population</th>
-                  <th>Stock</th>
-                  <th>Demande</th>
-                </tr>
-              </thead>
-              <tbody>
-                {CENTERS.map((center) => (
-                  <tr key={center.id}>
-                    <td>{center.id}</td>
-                    <td>{center.incidence7d}</td>
-                    <td>{center.population.toLocaleString("fr-FR")}</td>
-                    <td>{Math.round(center.stockLevel * 100)}%</td>
-                    <td>{center.demandUnits}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <p className="hint">
+            Objectifs optimises par MOACO: minimiser le temps total et maximiser
+            la couvrance sanitaire.
+          </p>
         </article>
       </section>
 
-      <section className="grid two-cols">
-        <article className="panel">
-          <h2>Visualisation des resultats: front de Pareto</h2>
-          <ParetoChart
-            plans={result.archive}
-            selectedPlanId={selectedPlan?.id}
-            onSelect={setSelectedPlanId}
-          />
-          <p className="hint">
-            Plus a gauche = moins de temps. Plus en haut = meilleure couvrance.
-            Cliquer un point pour afficher sa route.
-          </p>
-        </article>
-
+      <section className="grid">
         <article className="panel">
           <h2>Plans recommandes</h2>
           <div className="scenario-grid">
@@ -385,6 +293,30 @@ function App() {
               </p>
             </div>
           ) : null}
+        </article>
+      </section>
+      <section className="grid">
+        <article className="panel">
+          <h2>3) Resultats et graphes</h2>
+          <NetworkGraph
+            depot={DEPOT}
+            centers={CENTERS}
+            selectedPlan={selectedPlan}
+          />
+          <p className="hint">
+            Ligne epaisse: route du plan selectionne. Couleur des centres: vert
+            = stock correct, orange = moyen, rouge = stock critique.
+          </p>
+
+          <ParetoChart
+            plans={result.archive}
+            selectedPlanId={selectedPlan?.id}
+            onSelect={setSelectedPlanId}
+          />
+          <p className="hint">
+            Plus a gauche = moins de temps. Plus en haut = meilleure couvrance.
+            Cliquer un point pour afficher sa route.
+          </p>
         </article>
       </section>
     </div>

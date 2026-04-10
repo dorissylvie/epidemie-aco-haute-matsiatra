@@ -5,18 +5,18 @@ import type {
     MoacoResult,
     NodeId,
     Plan,
-    Weights,
 } from "../types/model";
 
 type NormCenter = Center & {
     nIncidence: number;
     nPopulation: number;
     nStockDeficit: number;
-    urgency: number;
+    sanitaryPriority: number;
 };
 
-const EPS = 1e-6;
+type AntProfile = "rapid" | "sanitary" | "explorer";
 
+const EPS = 1e-6;
 function normalize(value: number, min: number, max: number) {
     return (value - min) / (max - min + EPS);
 }
@@ -59,7 +59,7 @@ function buildTravelTime(depot: Depot, centers: Center[]) {
     return table;
 }
 
-function createNormCenters(centers: Center[], weights: Weights): NormCenter[] {
+function createNormCenters(centers: Center[]): NormCenter[] {
     const incMin = Math.min(...centers.map((c) => c.incidence7d));
     const incMax = Math.max(...centers.map((c) => c.incidence7d));
     const popMin = Math.min(...centers.map((c) => c.population));
@@ -70,19 +70,23 @@ function createNormCenters(centers: Center[], weights: Weights): NormCenter[] {
         const nPopulation = normalize(center.population, popMin, popMax);
         const nStockDeficit = 1 - center.stockLevel;
 
-        const urgency =
-            weights.incidence * nIncidence +
-            weights.population * nPopulation +
-            weights.stockDeficit * nStockDeficit;
+        const sanitaryPriority = (nIncidence + nPopulation + nStockDeficit) / 3;
 
         return {
             ...center,
             nIncidence,
             nPopulation,
             nStockDeficit,
-            urgency,
+            sanitaryPriority,
         };
     });
+}
+
+function getAntProfile(index: number): AntProfile {
+    const mod = index % 3;
+    if (mod === 0) return "rapid";
+    if (mod === 1) return "sanitary";
+    return "explorer";
 }
 
 function dominates(a: Plan, b: Plan) {
@@ -138,20 +142,23 @@ function selectBalancedPlan(archive: Plan[]) {
 export function runMoaco(
     centers: Center[],
     depot: Depot,
-    weights: Weights,
     params: MoacoParams,
 ): MoacoResult {
     const travelTime = buildTravelTime(depot, centers);
-    const normCenters = createNormCenters(centers, weights);
+    const normCenters = createNormCenters(centers);
     const centerById = new Map(normCenters.map((c) => [c.id, c]));
 
     const nodeIds: NodeId[] = [depot.id, ...normCenters.map((c) => c.id)];
-    const pheromone: Record<string, Record<string, number>> = {};
+    const pheromoneTime: Record<string, Record<string, number>> = {};
+    const pheromoneHealth: Record<string, Record<string, number>> = {};
 
     for (const from of nodeIds) {
-        pheromone[from] = {};
+        pheromoneTime[from] = {};
+        pheromoneHealth[from] = {};
         for (const to of nodeIds) {
-            pheromone[from][to] = from === to ? 0 : 0.4;
+            const init = from === to ? 0 : 0.4;
+            pheromoneTime[from][to] = init;
+            pheromoneHealth[from][to] = init;
         }
     }
 
@@ -164,6 +171,8 @@ export function runMoaco(
         const iterationPlans: Plan[] = [];
 
         for (let ant = 0; ant < params.ants; ant += 1) {
+            const profile = getAntProfile(ant);
+            const explorerBlend = 0.35 + Math.random() * 0.3;
             const remaining = new Set(normCenters.map((c) => c.id));
             const route: NodeId[] = [depot.id];
             const centersVisited: string[] = [];
@@ -192,11 +201,24 @@ export function runMoaco(
                 }
 
                 const chosen = randomPickByWeight(feasible, (candidate) => {
-                    const tau = pheromone[current][candidate.id] ** params.alpha;
-                    const eta =
-                        (candidate.urgency / (travelTime[current][candidate.id] + EPS)) **
-                        params.beta;
-                    return tau * eta;
+                    const moveCost = travelTime[current][candidate.id] + EPS;
+                    const etaTime = (1 / moveCost) ** params.beta;
+                    const etaHealth = (candidate.sanitaryPriority / moveCost) ** params.beta;
+                    const tauTime = pheromoneTime[current][candidate.id] ** params.alpha;
+                    const tauHealth =
+                        pheromoneHealth[current][candidate.id] ** params.alpha;
+
+                    if (profile === "rapid") {
+                        return tauTime * etaTime;
+                    }
+
+                    if (profile === "sanitary") {
+                        return tauHealth * etaHealth;
+                    }
+
+                    const logisticPart = tauTime * etaTime;
+                    const healthPart = tauHealth * etaHealth;
+                    return explorerBlend * logisticPart + (1 - explorerBlend) * healthPart;
                 });
 
                 totalTime += travelTime[current][chosen.id];
@@ -238,13 +260,16 @@ export function runMoaco(
 
         for (const from of nodeIds) {
             for (const to of nodeIds) {
-                pheromone[from][to] *= 1 - params.evaporation;
+                pheromoneTime[from][to] *= 1 - params.evaporation;
+                pheromoneHealth[from][to] *= 1 - params.evaporation;
             }
         }
 
-        const topForDeposit = [...archive]
-            .sort((a, b) => b.coverageScore - a.coverageScore)
-            .slice(0, 12);
+        const topForDeposit = [...archive].slice(0, 18);
+
+        if (topForDeposit.length === 0) {
+            continue;
+        }
 
         const minTime = Math.min(...topForDeposit.map((p) => p.totalTime));
         const maxTime = Math.max(...topForDeposit.map((p) => p.totalTime));
@@ -254,13 +279,16 @@ export function runMoaco(
         for (const plan of topForDeposit) {
             const normTime = normalize(plan.totalTime, minTime, maxTime);
             const normCov = normalize(plan.coverageScore, minCov, maxCov);
-            const quality = 0.5 * (1 - normTime) + 0.5 * normCov;
-            const deposit = 0.06 + 0.2 * quality;
+            const qualityTime = 1 - normTime;
+            const qualityHealth = normCov;
+            const depositTime = 0.04 + 0.18 * qualityTime;
+            const depositHealth = 0.04 + 0.18 * qualityHealth;
 
             for (let i = 0; i < plan.route.length - 1; i += 1) {
                 const from = plan.route[i];
                 const to = plan.route[i + 1];
-                pheromone[from][to] += deposit;
+                pheromoneTime[from][to] += depositTime;
+                pheromoneHealth[from][to] += depositHealth;
             }
         }
     }

@@ -18,12 +18,6 @@ export type Depot = {
     y: number;
 };
 
-export type Weights = {
-    incidence: number;
-    population: number;
-    stockDeficit: number;
-};
-
 export type MoacoParams = {
     ants: number;
     iterations: number;
