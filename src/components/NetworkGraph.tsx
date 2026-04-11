@@ -41,7 +41,11 @@ export function NetworkGraph({ depot, centers, selectedPlan }: Props) {
 
   const byId = new Map(nodes.map((n) => [n.id, n]));
 
-  const highlightedSegments: Array<{ from: string; to: string; order: number }> = [];
+  const highlightedSegments: Array<{
+    from: string;
+    to: string;
+    order: number;
+  }> = [];
   if (selectedPlan) {
     for (let i = 0; i < selectedPlan.route.length - 1; i += 1) {
       highlightedSegments.push({
@@ -70,7 +74,13 @@ export function NetworkGraph({ depot, centers, selectedPlan }: Props) {
         >
           <polygon points="0 0, 10 3, 0 6" fill="var(--teal)" />
         </marker>
-        <linearGradient id="networkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient
+          id="networkGradient"
+          x1="0%"
+          y1="0%"
+          x2="100%"
+          y2="100%"
+        >
           <stop offset="0%" stopColor="var(--sky)" stopOpacity="0.04" />
           <stop offset="100%" stopColor="var(--teal)" stopOpacity="0.04" />
         </linearGradient>
@@ -183,15 +193,23 @@ export function NetworkGraph({ depot, centers, selectedPlan }: Props) {
           </text>
           {/* Info compacte au survol */}
           <title>
-            {center.name} - Incidence: {Math.round(center.incidence7d)}/100k - Stock:{" "}
-            {Math.round(center.stockLevel * 100)}%
+            {center.name} - Incidence: {Math.round(center.incidence7d)}/100k -
+            Stock: {Math.round(center.stockLevel * 100)}%
           </title>
         </g>
       ))}
 
       {/* Légende stock */}
       <g className="network-legend">
-        <rect x="2" y="2" width="24" height="12" rx="1.5" fill="white" opacity="0.92" />
+        <rect
+          x="2"
+          y="2"
+          width="24"
+          height="12"
+          rx="1.5"
+          fill="white"
+          opacity="0.92"
+        />
         <circle cx="5" cy="6" r="1.2" fill="#16a34a" />
         <text x="7.2" y="6.8" className="legend-text">
           Bon

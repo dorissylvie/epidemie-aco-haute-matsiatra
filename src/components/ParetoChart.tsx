@@ -30,7 +30,10 @@ export function ParetoChart({ plans, selectedPlanId, onSelect }: Props) {
   };
 
   // Génération de grille intelligente
-  const gridData = Array.from({ length: GRID_LINES + 1 }, (_, i) => i / GRID_LINES);
+  const gridData = Array.from(
+    { length: GRID_LINES + 1 },
+    (_, i) => i / GRID_LINES,
+  );
 
   return (
     <svg
@@ -144,7 +147,12 @@ export function ParetoChart({ plans, selectedPlanId, onSelect }: Props) {
       <text x={47} y={98.5} className="pareto-axis-label">
         Temps total (min)
       </text>
-      <text x={5} y={5} className="pareto-axis-label" transform="rotate(-90 5 5)">
+      <text
+        x={5}
+        y={5}
+        className="pareto-axis-label"
+        transform="rotate(-90 5 5)"
+      >
         Couvrance (%)
       </text>
 
@@ -192,7 +200,15 @@ export function ParetoChart({ plans, selectedPlanId, onSelect }: Props) {
 
       {/* Légende */}
       <g className="pareto-legend">
-        <rect x="2" y="2" width="18" height="10" rx="1" fill="white" opacity="0.9" />
+        <rect
+          x="2"
+          y="2"
+          width="18"
+          height="10"
+          rx="1"
+          fill="white"
+          opacity="0.9"
+        />
         <circle cx="5" cy="6.5" r="1" className="pareto-point" />
         <text x="7" y="7" className="pareto-legend-text">
           Plans
