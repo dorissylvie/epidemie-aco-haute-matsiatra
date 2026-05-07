@@ -198,31 +198,6 @@ export function NetworkGraph({ depot, centers, selectedPlan }: Props) {
           </title>
         </g>
       ))}
-
-      {/* Légende stock */}
-      <g className="network-legend">
-        <rect
-          x="2"
-          y="2"
-          width="24"
-          height="12"
-          rx="1.5"
-          fill="white"
-          opacity="0.92"
-        />
-        <circle cx="5" cy="6" r="1.2" fill="#16a34a" />
-        <text x="7.2" y="6.8" className="legend-text">
-          Bon
-        </text>
-        <circle cx="13" cy="6" r="1.2" fill="#f97316" />
-        <text x="15.2" y="6.8" className="legend-text">
-          Moyen
-        </text>
-        <circle cx="20.5" cy="6" r="1.2" fill="#dc2626" />
-        <text x="22.7" y="6.8" className="legend-text">
-          Critique
-        </text>
-      </g>
     </svg>
   );
 }

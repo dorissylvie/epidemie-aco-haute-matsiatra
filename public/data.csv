@@ -1,0 +1,10 @@
+id;name;x;y;incidence7d;population;stockLevel;demandUnits
+C1;Centre Avaradrova;18;22;96;17600;0.19;120
+C2;Centre Ambalapaiso;78;20;42;28900;0.67;85
+C3;Centre Tsaramandroso;84;68;81;14300;0.14;135
+C4;Centre Soanierana;42;82;55;23100;0.49;92
+C5;Centre Ankofafalahy;12;62;104;11900;0.11;140
+C6;Centre Mahasoabe;63;36;29;32100;0.74;70
+C7;Centre Kianjandrakefina;28;45;68;16800;0.33;105
+C8;Centre Tanambao;72;84;47;25400;0.58;88
+C9;Centre Vohitrinambo;22;76;73;13700;0.24;118
