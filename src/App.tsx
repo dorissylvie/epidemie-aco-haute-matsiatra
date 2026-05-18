@@ -7,7 +7,13 @@ import type { Center, MoacoParams, MoacoResult, Plan } from "./types/model";
 import "./App.css";
 import Hero from "./components/Hero";
 import Header from "./components/Header";
-import { MoveRight } from "lucide-react";
+import {
+  MoveRight,
+  Settings2,
+  Kanban,
+  SquareChartGantt,
+  Goal,
+} from "lucide-react";
 import Papa from "papaparse";
 import { NetworkGraphInitial } from "./components/NetworkGraphInitial";
 
@@ -240,7 +246,10 @@ function App() {
           <>
             <section className="grid">
               <article className="panel">
-                <h2 className="w-full text-center text-2xl font-bold text-gray-800 pb-4 uppercase border-b-2 border-teal-600/50 ">
+                <div className="w-full flex justify-center my-4">
+                  <Kanban className="text-gray-400 w-80" />
+                </div>
+                <h2 className="w-full text-center text-4xl font-bold text-teal-800 pb-4 mb-6 uppercase border-b-2 border-teal-800 ">
                   {" "}
                   Affichage des donnees
                 </h2>
@@ -270,38 +279,34 @@ function App() {
                     </tbody>
                   </table>
                 </div>
-
-                <NetworkGraphInitial
-                  depot={DEPOT}
-                  centers={centers}
-                  selectedPlan={selectedPlan}
-                />
-              </article>
-            </section>
-            <section className="grid">
-              <article className="panel">
-                <h2>Contexte MOACO</h2>
-                <p>
-                  Le moteur utilise trois profils de fourmis sans fusionner les
-                  objectifs en un score unique: rapides (temps), sanitaires
-                  (couvrance) et exploratrices (mixte).
-                </p>
-                <div className="normalized-weights">
-                  <p>Principe MOACO utilise:</p>
-                  <ul>
-                    <li>
-                      Deux objectifs conserves separement: temps et couvrance
-                    </li>
-                    <li>Deux traces de pheromones: logistique et sanitaire</li>
-                    <li>Selection finale par non-dominance (archive Pareto)</li>
-                  </ul>
+                <div className="w-full flex items-start justify-c gap-6">
+                  <div className="w-[50%]">
+                    <p>
+                      Les emplacements des centres sont représentés par des
+                      cercles. Dans une distance à vue d'oiseau
+                    </p>
+                  </div>
+                  <div className="w-[50%]">
+                    <NetworkGraphInitial
+                      depot={DEPOT}
+                      centers={centers}
+                      selectedPlan={selectedPlan}
+                    />
+                  </div>
                 </div>
               </article>
             </section>
 
+            {/* Parametres ACO  */}
             <section className="grid">
               <article className="panel">
-                <h2>2) Parametres ACO</h2>
+                <div className="w-full flex justify-center my-4">
+                  <Settings2 className="text-gray-400 w-80" />
+                </div>
+                <h2 className="w-full text-center text-4xl font-bold text-teal-800 pb-4 mb-6 uppercase border-b-2 border-teal-800 ">
+                  {" "}
+                  Paramètre MOACO
+                </h2>
                 <div className="constraints-grid">
                   <label>
                     Fourmis
@@ -392,44 +397,12 @@ function App() {
 
             <section className="grid">
               <article className="panel">
-                <h2>Lecture rapide des parametres</h2>
-                <p>
-                  Augmenter capacite/temps augmente en general la couvrance.
-                  Augmenter fourmis/iterations renforce la qualite de
-                  l&apos;exploration.
-                </p>
-                <p className="hint">
-                  Objectifs optimises par MOACO: minimiser le temps total et
-                  maximiser la couvrance sanitaire.
-                </p>
-              </article>
-            </section>
-
-            <section className="grid">
-              <article className="panel">
-                <h2>Plans recommandes</h2>
-                <div className="scenario-grid">
-                  {planByLabel.map((entry) => (
-                    <button
-                      key={`${entry.label}-${entry.plan.id}`}
-                      className={
-                        entry.plan.id === selectedPlan?.id
-                          ? "scenario-card selected"
-                          : "scenario-card"
-                      }
-                      onClick={() => setSelectedPlanId(entry.plan.id)}
-                    >
-                      <h3>{entry.label}</h3>
-                      <p>Temps total: {entry.plan.totalTime} min</p>
-                      <p>Couvrance: {entry.plan.coverageScore}%</p>
-                      <p>
-                        Population servie:{" "}
-                        {entry.plan.servedPopulation.toLocaleString("fr-FR")}
-                      </p>
-                      <p>Stock utilise: {entry.plan.stockUsed} unites</p>
-                    </button>
-                  ))}
+                <div className="w-full flex justify-center my-4">
+                  <SquareChartGantt className="text-gray-400 w-80" />
                 </div>
+                <h2 className="w-full text-center text-4xl font-bold text-teal-800 pb-4 mb-6 uppercase border-b-2 border-teal-800 ">
+                  Plans recommandés
+                </h2>
 
                 <div className="plans-catalog-header">
                   <h3>Catalogue des plans obtenus ({result.archive.length})</h3>
@@ -460,44 +433,72 @@ function App() {
                       <span className="metric">
                         Centres: <strong>{plan.centersVisited.length}</strong>
                       </span>
+                      <span className="metric">
+                        Routes: <strong>{routeToText(plan.route)}</strong>
+                      </span>
                     </button>
                   ))}
                 </div>
 
-                {selectedPlan ? (
-                  <div className="selected-plan-box">
-                    <h3>Route du plan selectionne</h3>
-                    <p>{routeToText(selectedPlan.route)}</p>
-                    <p>
-                      Centres visites:{" "}
-                      {selectedPlan.centersVisited.join(", ") || "Aucun"}
+                <h3>Resultats et graphes</h3>
+                <div className="w-full flex justify-center items-start gap-4 pt-10">
+                  <div>
+                    <NetworkGraph
+                      depot={DEPOT}
+                      centers={centers}
+                      selectedPlan={selectedPlan}
+                    />
+                    <p className="hint">
+                      Ligne epaisse: route du plan selectionne. Couleur des
+                      centres: vert = stock correct, orange = moyen, rouge =
+                      stock critique.
                     </p>
                   </div>
-                ) : null}
+                  <div>
+                    <ParetoChart
+                      plans={result.archive}
+                      selectedPlanId={selectedPlan?.id}
+                      onSelect={setSelectedPlanId}
+                    />
+                    <p className="hint">
+                      Plus a gauche = moins de temps. Plus en haut = meilleure
+                      couvrance. Cliquer un point pour afficher sa route.
+                    </p>
+                  </div>
+                </div>
               </article>
             </section>
+
             <section className="grid">
               <article className="panel">
-                <h2>3) Resultats et graphes</h2>
-                <NetworkGraph
-                  depot={DEPOT}
-                  centers={centers}
-                  selectedPlan={selectedPlan}
-                />
-                <p className="hint">
-                  Ligne epaisse: route du plan selectionne. Couleur des centres:
-                  vert = stock correct, orange = moyen, rouge = stock critique.
-                </p>
-
-                <ParetoChart
-                  plans={result.archive}
-                  selectedPlanId={selectedPlan?.id}
-                  onSelect={setSelectedPlanId}
-                />
-                <p className="hint">
-                  Plus a gauche = moins de temps. Plus en haut = meilleure
-                  couvrance. Cliquer un point pour afficher sa route.
-                </p>
+                <div className="w-full flex justify-center my-4">
+                  <Goal className="text-gray-400 w-80" />
+                </div>
+                <h2 className="w-full text-center text-4xl font-bold text-teal-800 pb-4 mb-6 uppercase border-b-2 border-teal-600/50 ">
+                  Résultat spécifique selon le plan à priorisé
+                </h2>
+                <div className="scenario-grid">
+                  {planByLabel.map((entry) => (
+                    <button
+                      key={`${entry.label}-${entry.plan.id}`}
+                      className={
+                        entry.plan.id === selectedPlan?.id
+                          ? "scenario-card selected"
+                          : "scenario-card"
+                      }
+                      onClick={() => setSelectedPlanId(entry.plan.id)}
+                    >
+                      <h3>{entry.label}</h3>
+                      <p>Temps total: {entry.plan.totalTime} min</p>
+                      <p>Couvrance: {entry.plan.coverageScore}%</p>
+                      <p>
+                        Population servie:{" "}
+                        {entry.plan.servedPopulation.toLocaleString("fr-FR")}
+                      </p>
+                      <p>Stock utilise: {entry.plan.stockUsed} unites</p>
+                    </button>
+                  ))}
+                </div>
               </article>
             </section>
           </>

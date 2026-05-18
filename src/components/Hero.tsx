@@ -7,10 +7,9 @@ function Hero() {
         <h1 className="text-6xl font-bold text-left text-teal-800">
           Déploiement d&apos;unités mobiles en contexte épidémique
         </h1>
-        <p className=" pt-4">
-          Cette demonstration applique un MOACO a front de Pareto: aucune
-          priorite fixe cout/sante n&apos;est imposee. Les fourmis explorent des
-          profils differents et le decideur choisit ensuite le compromis.
+        <p className=" pt-4 text-lg text-gray-700">
+          Objectifs optimises par MOACO: minimiser le temps total et maximiser
+          la couvrance sanitaire.
         </p>
       </div>
       <div className="w-full flex items-center justify-center">

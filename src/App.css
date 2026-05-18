@@ -266,14 +266,11 @@ h6 {
 }
 
 .panel {
-    background:
+    /* background:
         linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 251, 244, 0.92) 100%);
     border: 1px solid var(--line);
-    border-radius: 16px;
+    border-radius: 16px; */
     padding: 1.2rem;
-    box-shadow:
-        0 8px 22px rgba(32, 24, 14, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(10px);
     transition: var(--transition);
     position: relative;
@@ -296,26 +293,7 @@ h6 {
 }
 
 .panel:hover {
-    box-shadow:
-        0 12px 32px rgba(32, 24, 14, 0.12),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
     transform: translateY(-2px);
-    border-color: rgba(14, 165, 162, 0.3);
-}
-
-.panel h2 {
-    margin: 0 0 0.6rem;
-    font-size: 1.15rem;
-    color: #28223a;
-    background: linear-gradient(135deg, #1e1a2d 0%, #3f3558 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.panel p {
-    margin: 0.24rem 0 0.76rem;
-    color: #2d2418;
 }
 
 .normalized-weights {
@@ -437,23 +415,8 @@ h6 {
 .pareto-svg {
     width: 100%;
     height: 400px;
-    border-radius: 16px;
-    background:
-        radial-gradient(circle at 22% 18%, #fff5df 0%, transparent 40%),
-        radial-gradient(circle at 82% 88%, #e8fffb 0%, transparent 40%),
-        linear-gradient(180deg, #fffdf9, #fff8ed);
-    border: 1px solid #ebd8bc;
     transition: var(--transition);
     animation: scaleIn 0.7s var(--ease-smooth);
-    box-shadow: 0 8px 24px rgba(14, 165, 162, 0.08);
-}
-
-.network-svg:hover,
-.pareto-svg:hover {
-    box-shadow:
-        0 16px 40px rgba(14, 165, 162, 0.16),
-        inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    border-color: rgba(14, 165, 162, 0.5);
 }
 
 /* Pareto Chart Styles */
@@ -849,7 +812,6 @@ tbody tr:hover td {
 .plans-catalog-header {
     margin-top: 0.84rem;
     padding-top: 0.58rem;
-    border-top: 2px solid #efe6d8;
     animation: slideInLeft 0.5s var(--ease-smooth);
     transition: border-color 0.3s ease;
 }
@@ -875,8 +837,10 @@ tbody tr:hover td {
     gap: 0.43rem;
     max-height: 302px;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-right: 0.2rem;
     animation: fadeInUp 0.6s var(--ease-smooth);
+    margin-bottom: 20px;
 }
 
 .plans-catalog::-webkit-scrollbar {
@@ -889,13 +853,8 @@ tbody tr:hover td {
 }
 
 .plans-catalog::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, var(--teal) 0%, var(--orange) 100%);
     border-radius: 10px;
     transition: background 0.3s ease;
-}
-
-.plans-catalog::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, var(--teal-light) 0%, var(--orange-light) 100%);
 }
 
 .plan-row {
